@@ -99,3 +99,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# dev env artifacts
+*.idea/
+*.DS_Store
+.vscode/
+

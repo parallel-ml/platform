@@ -6,6 +6,7 @@ from multiprocessing import Queue
 
 
 def key():
+    """ Read input key. """
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
@@ -17,6 +18,13 @@ def key():
 
 
 def robot(stop):
+    """
+        Control the movement of robot.
+        w: forward
+        s: backward
+        a: left
+        d: right
+    """
     while not stop.is_set():
         signal = control_queue.get()
         if signal == 'w':
@@ -28,16 +36,18 @@ def robot(stop):
         elif signal == 'd':
             gpg3.right()
         time.sleep(0.1)
+
+        # no signal observed in the queue, then stop the movement of the robot
         if control_queue.qsize() <= 0:
             gpg3.stop()
-        
+
 
 def main():
-    # start the camera
+    # start the camera in a separate thread
     stop_camera = Event()
     camera_thread = Thread(target=camera, args=(stop_camera,))
     camera_thread.start()
-    
+
     global gpg3, control_queue
     gpg3 = EasyGoPiGo3()
     gpg3.set_speed(180)
@@ -47,10 +57,11 @@ def main():
     robot_thread = Thread(target=robot, args=(stop_robot,))
     robot_thread.start()
     prev_signal = ' '
-    
+
     while True:
         signal = key()
 
+        # quit signal
         if signal == 'q':
             break
         elif control_queue.qsize() <= 0 or prev_signal != signal:
@@ -61,6 +72,7 @@ def main():
     stop_camera.set()
     stop_robot.set()
     exit()
+
 
 if __name__ == '__main__':
     main()
